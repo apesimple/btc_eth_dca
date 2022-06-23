@@ -1,12 +1,14 @@
+import os
 import configparser
 import ccxt
 import pandas as pd
 import time
 from pathlib import Path
 
-directory = Path(__file__).resolve().parents[0]
+home_path = os.getenv('HOME')
+script_directory = Path(__file__).resolve().parents[0]
 config = configparser.ConfigParser()
-config.read(f'{directory}/config.ini')
+config.read(f"{home_path}/config.ini")
 
 FTX = ccxt.ftx({
     'apiKey': config['FTX']['API_KEY'],
@@ -32,7 +34,7 @@ TRADES_FILENAME = 'FTX_TRADE_HISTORY.csv'
 
 def load_trades():
     try:
-        df = pd.read_csv(TRADES_FILENAME)
+        df = pd.read_csv(f"{script_directory}/{TRADES_FILENAME}")
     except FileNotFoundError:
         columns = ['orderid', 'symbol', 'size', 'timestamp',
                    'datetime', 'price', 'tradeid', 'feerate',
@@ -42,7 +44,7 @@ def load_trades():
 
 
 def save_trades(trades):
-    trades.to_csv(TRADES_FILENAME, index=False)
+    trades.to_csv(f"{script_directory}/{TRADES_FILENAME}", index=False)
 
 
 def market_buy(symbol, size):
