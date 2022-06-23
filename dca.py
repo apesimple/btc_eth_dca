@@ -2,9 +2,11 @@ import configparser
 import ccxt
 import pandas as pd
 import time
+from pathlib import Path
 
+directory = Path(__file__).resolve().parents[0]
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(f'{directory}/config.ini')
 
 FTX = ccxt.ftx({
     'apiKey': config['FTX']['API_KEY'],
