@@ -15,4 +15,4 @@ summary = pd.merge(summary, last_price, on='symbol')
 
 print(summary)
 
-send_slack_msg(f"```{summary[['symbol', 'total_size', 'avg_price']].to_string()}```")
+send_slack_msg(f"```{summary[['symbol', 'total_size', 'avg_price']].to_string()}```", "#dca")
