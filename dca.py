@@ -17,11 +17,11 @@ FTX = ccxt.ftx({
 INVESTMENTS = [
     {
         'symbol': 'ETH/USD',
-        'dca_amount': 30
+        'dca_amount': 15
     },
     {
         'symbol': 'BTC/USD',
-        'dca_amount': 20
+        'dca_amount': 10
     }
 ]
 
