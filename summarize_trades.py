@@ -1,23 +1,38 @@
-import pandas as pd
-from dca import load_trades
-from helper_functions import send_slack_msg
+from helper_functions import send_slack_msg, connect_to_ftx, load_trades
 
+TRADES_FILENAME = 'FTX_TRADE_HISTORY.csv'
 
-trades = load_trades()
+FTX = connect_to_ftx()
+trades = load_trades(TRADES_FILENAME)
 trades = trades.sort_values('orderid')
 
-last_price = trades[['symbol', 'price']].groupby('symbol')['price'].last()
+balances = FTX.fetch_balance()
 summary = trades[['symbol', 'size', 'fee', 'cost']].\
     groupby('symbol').agg(total_cost=('cost', sum), total_fee=('fee', sum), total_size=('size', sum)).reset_index()
 
-summary['avg_price'] = round((summary['total_cost'] + summary['total_fee']) / summary['total_size'], 2)
+summary['total_invested'] = summary['total_cost'] + summary['total_fee']
+summary['avg_price'] = round(summary['total_invested'] / summary['total_size'], 2)
 
-summary = pd.merge(summary, last_price, on='symbol')
+for idx, item in summary.iterrows():
+    ticker = FTX.fetch_ticker(item['symbol'])
+    summary.loc[summary['symbol'] == item['symbol'], 'last_price'] = ticker['last']
 
 print(summary)
+text = \
+f"""
+USD Balance: {round(balances['total']['USD']):,}
+Total Invested: {round(summary['total_invested'].sum()):,}
+  BTC: {round(summary.loc[summary['symbol'] == 'BTC/USD', 'total_invested'].iloc[0]):,}
+  ETH: {round(summary.loc[summary['symbol'] == 'ETH/USD', 'total_invested'].iloc[0]):,}
+  Trades: {trades['orderid'].nunique() / 2}
+BTC Balance: {round(summary.loc[summary['symbol'] == 'BTC/USD', 'total_size'].iloc[0], 4)}
+  Current Price: ${round(summary.loc[summary['symbol'] == 'BTC/USD', 'last_price'].iloc[0]):,}
+  Average Price: ${round(summary.loc[summary['symbol'] == 'BTC/USD', 'avg_price'].iloc[0]):,}
+ETH Balance: {round(summary.loc[summary['symbol'] == 'ETH/USD', 'total_size'].iloc[0], 4)}
+  Current Price: ${round(summary.loc[summary['symbol'] == 'ETH/USD', 'last_price'].iloc[0]):,}
+  Average Price: ${round(summary.loc[summary['symbol'] == 'ETH/USD', 'avg_price'].iloc[0]):,}
+"""
 
-send_slack_msg(f"```{summary[['symbol', 'total_size', 'avg_price']].to_string()}```", "#dca")
+send_slack_msg(f"```{text}```", "#dca")
 
-
-# TODO: Add number of total orders to slack
-# TODO: Show invested value vs. current value
+FTX.fetch_markets()
