@@ -1,22 +1,7 @@
-import os
-import configparser
-import ccxt
 import pandas as pd
 import time
-from pathlib import Path
+from helper_functions import connect_to_ftx, load_trades, save_trades
 
-home_path = os.getenv('HOME')
-script_directory = Path(__file__).resolve().parents[0]
-config = configparser.ConfigParser()
-config.read(f"{home_path}/config.ini")
-
-FTX = ccxt.ftx({
-    'apiKey': config['FTX']['API_KEY'],
-    'secret': config['FTX']['SECRET_KEY'],
-    'headers': {
-        'FTX-SUBACCOUNT': 'DCA',
-    }
-})
 
 INVESTMENTS = [
     {
@@ -29,22 +14,8 @@ INVESTMENTS = [
     }
 ]
 
+FTX = connect_to_ftx()
 TRADES_FILENAME = 'FTX_TRADE_HISTORY.csv'
-
-
-def load_trades():
-    try:
-        df = pd.read_csv(f"{script_directory}/{TRADES_FILENAME}")
-    except FileNotFoundError:
-        columns = ['orderid', 'symbol', 'size', 'timestamp',
-                   'datetime', 'price', 'tradeid', 'feerate',
-                   'fee', 'feecurrency', 'cost']
-        df = pd.DataFrame(columns=columns)
-    return df
-
-
-def save_trades(trades):
-    trades.to_csv(f"{script_directory}/{TRADES_FILENAME}", index=False)
 
 
 def market_buy(symbol, size):
@@ -105,10 +76,10 @@ def add_trade_records(new_trades):
     """ Parses order and save to file """
     new_parsed_trades = parse_trades(new_trades)
 
-    historical_trades = load_trades()
+    historical_trades = load_trades(TRADES_FILENAME)
     trades = pd.concat([historical_trades, new_parsed_trades]).reset_index(drop=True)
 
-    save_trades(trades)
+    save_trades(trades, TRADES_FILENAME)
 
 
 def get_order_trade_info(order):

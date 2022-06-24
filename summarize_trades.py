@@ -1,6 +1,7 @@
 import pandas as pd
 from dca import load_trades
-from slack_functions import send_slack_msg
+from helper_functions import send_slack_msg
+
 
 trades = load_trades()
 trades = trades.sort_values('orderid')
@@ -16,3 +17,7 @@ summary = pd.merge(summary, last_price, on='symbol')
 print(summary)
 
 send_slack_msg(f"```{summary[['symbol', 'total_size', 'avg_price']].to_string()}```", "#dca")
+
+
+# TODO: Add number of total orders to slack
+# TODO: Show invested value vs. current value
