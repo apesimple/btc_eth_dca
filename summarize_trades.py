@@ -17,6 +17,7 @@ for idx, item in summary.iterrows():
     ticker = FTX.fetch_ticker(item['symbol'])
     summary.loc[summary['symbol'] == item['symbol'], 'last_price'] = ticker['last']
 
+summary['current_value'] = summary['total_size'] * summary['last_price']
 print(summary)
 text = \
 f"""
@@ -25,6 +26,9 @@ Total Invested: {round(summary['total_invested'].sum()):,}
   BTC: {round(summary.loc[summary['symbol'] == 'BTC/USD', 'total_invested'].iloc[0]):,}
   ETH: {round(summary.loc[summary['symbol'] == 'ETH/USD', 'total_invested'].iloc[0]):,}
   Trades: {trades['orderid'].nunique() / 2}
+Current Value: {round(summary['current_value'].sum()):,}
+  BTC: {round(summary.loc[summary['symbol'] == 'BTC/USD', 'current_value'].iloc[0]):,}
+  ETH: {round(summary.loc[summary['symbol'] == 'ETH/USD', 'current_value'].iloc[0]):,}
 BTC Balance: {round(summary.loc[summary['symbol'] == 'BTC/USD', 'total_size'].iloc[0], 4)}
   Current Price: ${round(summary.loc[summary['symbol'] == 'BTC/USD', 'last_price'].iloc[0]):,}
   Average Price: ${round(summary.loc[summary['symbol'] == 'BTC/USD', 'avg_price'].iloc[0]):,}
